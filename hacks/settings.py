@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'hackathon.apps.HackathonConfig',
     'team.apps.TeamConfig',
     'rest_framework.authtoken',
     'django.contrib.admin',
@@ -141,3 +142,8 @@ REST_FRAMEWORK = {
 # CSRF_COOKIE_HTTPONLY = False
 # SESSION_COOKIE_SECURE = False
 # CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),
+    "SIGNING_KEY": "74EkD0KgCN3bbP4mVk0CT1+dMx17yD4wthxmU07vySiTcgDI3BNg1VCLu8HUNCFA",
+}

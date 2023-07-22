@@ -21,15 +21,16 @@ from rest_framework.routers import DefaultRouter
 from django.conf import settings
 from django.conf.urls.static import static
 
+from team.views import TeamCreateListView
 
 # router = DefaultRouter()
-# router.register(r'product', ProductViewSet, basename='Product')
+# router.register(r'team', TeamEditView.as_view(), basename='team_edit')
 # router.register(r'image', ImageViewSet, basename='Image')
 
 urlpatterns = [
     path('admin', admin.site.urls),
     path('api/auth/', include('auth.urls')),
-    path('api/team/', include('team.urls')),
+    path('api/teams/', include('team.urls')),
     # path('', include(router.urls)),
 ]
 

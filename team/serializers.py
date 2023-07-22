@@ -24,3 +24,6 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         team.save()
 
         return team
+
+    # def update(self, instance, validated_data):
+    #     return validated_data
