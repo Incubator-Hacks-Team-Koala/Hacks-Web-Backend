@@ -20,6 +20,7 @@ class ProfileCreateSerializer(serializers.ModelSerializer):
         requested_username = self.context['view'].kwargs['username']
 
         if self.context['request'].method in ['POST', 'PATCH'] and \
+                not self.context['request'].user.is_staff and \
                 logged_in_username != requested_username:
             raise serializers.ValidationError("You are not permitted to edit this user profile")
 

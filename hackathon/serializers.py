@@ -1,8 +1,11 @@
+import random
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from hackathon.models import Hackathon, HackathonTeamEnrol, HackathonUserEnrol, HackathonAward, HackathonAwardVote
 from team.models import Team, TeamMembership
+from user.models import Profile
 
 
 class HackathonEnrolTeamCreateSerializer(serializers.ModelSerializer):
@@ -66,7 +69,6 @@ class HackathonEnrolUserCreateSerializer(serializers.ModelSerializer):
 
         return data
 
-
     def create(self, validated_data):
         user = User.objects.get(pk=self.context['request'].user.id)
         user_enrol = HackathonUserEnrol.objects.create(
@@ -75,6 +77,75 @@ class HackathonEnrolUserCreateSerializer(serializers.ModelSerializer):
         )
         user_enrol.save()
         return user_enrol
+
+
+class HackathonGroupUserCreateSerializer(serializers.Serializer):
+    team_min = serializers.IntegerField(write_only=True, min_value=2)
+    team_max = serializers.IntegerField(write_only=True, min_value=2)
+
+    def validate(self, data):
+        hackathon = Hackathon.objects.get(pk=self.context['view'].kwargs['hack_id'])
+        enrolled_users = HackathonUserEnrol.objects.filter(hackathon=hackathon)
+        if len(enrolled_users) < data['team_min']:
+            raise serializers.ValidationError("Not enough signed up members to put into groups")
+        return data
+
+
+    def create(self, validated_data):
+        hackathon = Hackathon.objects.get(pk=self.context['view'].kwargs['hack_id'])
+        enrolled_users = HackathonUserEnrol.objects.filter(hackathon=hackathon)
+        dev_types = {1:[],2:[],3:[]}
+        for enrolled_user in enrolled_users:
+            profile = Profile.objects.get(user=enrolled_user.user)
+            dev_types[profile.dev_type].append(enrolled_user.user)
+
+        diff = 999
+        team_size = 0
+        for i in range(validated_data['team_min'], validated_data['team_max']):
+            if len(enrolled_users) % i < diff:
+                diff = len(enrolled_users) % i
+                team_size = i
+
+        no_teams = len(enrolled_users) // team_size
+
+        team_groups = []
+        for i in range(no_teams):
+            team_group = []
+            for y in range(team_size):
+                devs = []
+                offset = -1
+                while not devs:
+                    offset += 1
+                    devs = dev_types[((y+offset) % 3)+1]
+
+                team_group.append(dev_types[((y+offset) % 3)+1].pop())
+            team_groups.append(team_group)
+
+
+        for group in team_groups:
+            team = Team.objects.create(
+                team_name=f"auto_team_{hackathon.id}.{group[0].id}",
+                team_name_pretty=f"auto_team_{hackathon.id}.{group[0].id}",
+                owner=group[0],
+                description="",
+                passcode=random.randint(1000,999999)
+            )
+
+            for user in group:
+                TeamMembership.objects.create(
+                    team=team,
+                    user=user
+                )
+
+            HackathonTeamEnrol.objects.create(
+                team=team,
+                hackathon=hackathon
+            )
+
+        # for enrolled_user in enrolled_users:
+        #     enrolled_user.delete()
+
+        return {"teams": [[user.username for user in team] for team in team_groups]}
 
 
 class HackathonCreateSerializer(serializers.ModelSerializer):

@@ -4,7 +4,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from hackathon.models import Hackathon, HackathonTeamEnrol, HackathonUserEnrol, HackathonAward
 from hackathon.serializers import HackathonCreateSerializer, HackathonEnrolTeamCreateSerializer, \
-    HackathonEnrolUserCreateSerializer, HackathonAwardCreateSerializer, HackathonAwardVoteSerializer
+    HackathonEnrolUserCreateSerializer, HackathonAwardCreateSerializer, HackathonAwardVoteSerializer, \
+    HackathonGroupUserCreateSerializer
 from hacks.authentication import TokenAuthentication, AllowAnyGet
 from team.models import Team
 
@@ -43,6 +44,13 @@ class HackathonEnrolUserCreateListView(generics.CreateAPIView):
         hack = Hackathon.objects.get(pk=self.kwargs['hack_id'])
         return HackathonUserEnrol.objects.filter(hackathon=hack)
 
+class HackathonGroupUserCreateView(generics.CreateAPIView):
+    permission_classes = (IsAdminUser,)
+    serializer_class = HackathonGroupUserCreateSerializer
+    authentication_classes = [
+        TokenAuthentication]
+
+
 
 class HackathonCreateListView(generics.CreateAPIView, generics.ListAPIView):
     queryset = Hackathon.objects.all()
@@ -54,7 +62,7 @@ class HackathonCreateListView(generics.CreateAPIView, generics.ListAPIView):
 
 class HackathonAwardCreateListView(generics.CreateAPIView, generics.ListAPIView):
     queryset = HackathonAward.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [AllowAnyGet | IsAdminUser]
     serializer_class = HackathonAwardCreateSerializer
     authentication_classes = [
         TokenAuthentication]
