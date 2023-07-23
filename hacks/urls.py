@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin', admin.site.urls),
     path('api/auth/', include('auth.urls')),
     path('api/teams/', include('team.urls')),
+    path('api/hacks/', include('hackathon.urls')),
     # path('', include(router.urls)),
 ]
 
