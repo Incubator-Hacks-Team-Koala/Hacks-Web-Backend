@@ -44,7 +44,7 @@ class TeamCreateSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=True)
     owner = serializers.CharField(read_only=True)
     team_name_pretty = serializers.CharField(required=True)
-    passcode = serializers.CharField(required=True)
+    passcode = serializers.CharField(required=False)
 
 
     class Meta:
@@ -62,8 +62,18 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Invalid team_name_pretty, That team name already exists")
 
-
         return data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        team = instance
+        user = User.objects.get(pk=self.context['request'].user.id)
+        if not TeamMembership.objects.filter(user=user, team=team).exists():
+            representation.pop('passcode')
+
+        return representation
+
 
     def create(self, validated_data):
         team = Team.objects.create(

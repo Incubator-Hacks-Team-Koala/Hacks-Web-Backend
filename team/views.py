@@ -26,7 +26,7 @@ class TeamCreateListView(generics.CreateAPIView, generics.ListAPIView):
         TokenAuthentication]
 
     def get_queryset(self):
-        if self.kwargs['team_name']:
+        if self.kwargs.get('team_name'):
             return Team.objects.all().filter(team_name=self.kwargs['team_name'])
         else:
             return Team.objects.all().filter(owner=User.objects.get(pk=self.request.user.id))
