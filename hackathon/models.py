@@ -14,6 +14,7 @@ class Hackathon(models.Model):
         db_table = "hackathon_hackathon"
 
 
+
 class HackathonTeamEnrol(models.Model):
     hackathon = models.ForeignKey(Hackathon, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -24,7 +25,9 @@ class HackathonTeamEnrol(models.Model):
 
     class Meta:
         db_table = "hackathon_team_enrol"
-
+        constraints = [
+            models.UniqueConstraint(fields=['hackathon', 'team'], name='uniq_hackathon_team'),
+        ]
 
 class HackathonAward(models.Model):
     hackathon = models.ForeignKey(Hackathon, on_delete=models.CASCADE)

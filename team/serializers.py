@@ -27,7 +27,7 @@ class TeamJoinSerializer(serializers.ModelSerializer):
         fields = ("team", "user", "passcode")
 
     def create(self, validated_data):
-        team = Team.objects.all().filter(team_name=self.context['view'].kwargs['team_name'])[0]
+        team = Team.objects.filter(team_name=self.context['view'].kwargs['team_name']).first()
         user = User.objects.get(pk=self.context['request'].user.id)
         enrol = TeamMembership.objects.create(
             team=team,
