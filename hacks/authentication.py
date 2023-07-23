@@ -7,14 +7,10 @@ class TokenAuthentication(JWTStatelessUserAuthentication):
     keyword = "Bearer"
 
 
-class IsAdminPost(BasePermission):
+class AllowAnyGet(BasePermission):
     """
-    Allows access only to authenticated users.
+    Allows access for non-authenticated users for get requests
     """
 
     def has_permission(self, request, view):
-        if request.method == 'GET':
-            return True
-        else:
-            return bool(request.user and request.user.is_staff)
-
+        return request.method == 'GET'

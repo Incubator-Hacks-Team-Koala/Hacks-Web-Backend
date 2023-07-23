@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from hackathon.models import Hackathon, HackathonTeamEnrol, HackathonUserEnrol
+from hackathon.models import Hackathon, HackathonTeamEnrol, HackathonUserEnrol, HackathonAward, HackathonAwardVote
 from team.models import Team, TeamMembership
 
 
@@ -98,3 +98,73 @@ class HackathonCreateSerializer(serializers.ModelSerializer):
         team.save()
 
         return team
+
+
+class HackathonAwardCreateSerializer(serializers.ModelSerializer):
+    hackathon = serializers.PrimaryKeyRelatedField(read_only=True, required=False)
+    name = serializers.CharField(required=True)
+    description = serializers.CharField(required=True)
+    open_date = serializers.DateTimeField(required=True)
+    close_date = serializers.DateTimeField(required=True)
+    winner_team = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = HackathonAward
+        fields = "__all__"
+
+    def create(self, validated_data):
+        hackathon = Hackathon.objects.get(pk=self.context['view'].kwargs['hack_id'])
+        award = HackathonAward.objects.create(
+            hackathon=hackathon,
+            name=validated_data['name'],
+            description=validated_data['description'],
+            open_date=validated_data['open_date'],
+            close_date=validated_data['close_date']
+        )
+
+        award.save()
+
+        return award
+
+
+class HackathonAwardVoteSerializer(serializers.ModelSerializer):
+    award = serializers.PrimaryKeyRelatedField(read_only=True, required=False)
+    user = serializers.PrimaryKeyRelatedField(read_only=True, required=False)
+    team = serializers.CharField(required=True)
+
+    class Meta:
+        model = HackathonAwardVote
+        fields = ("award", "user", "team")
+
+    def validate(self, data):
+        team = Team.objects.filter(team_name=data['team']).first()
+        award = HackathonAward.objects.filter(pk=self.context['view'].kwargs['award_id']).first()
+        user = User.objects.get(pk=self.context['request'].user.id)
+        if not team:
+            raise serializers.ValidationError("Unknown team")
+
+        if not award:
+            raise serializers.ValidationError("Unknown award")
+
+        user_teams = [tm.team for tm in TeamMembership.objects.filter(user=user)]
+        if team in user_teams:
+            raise serializers.ValidationError("You cannot vote for your own team")
+
+        if HackathonAwardVote.objects.filter(award=award,user=user).exists():
+            raise serializers.ValidationError("You have already voted for this award")
+
+        return data
+
+    def create(self, validated_data):
+        user = User.objects.get(pk=self.context['request'].user.id)
+        award = HackathonAward.objects.get(pk=self.context['view'].kwargs['award_id'])
+        team = Team.objects.get(team_name=validated_data['team'])
+        award_vote = HackathonAwardVote.objects.create(
+            award=award,
+            user=user,
+            team=team
+        )
+
+        award_vote.save()
+
+        return award_vote
